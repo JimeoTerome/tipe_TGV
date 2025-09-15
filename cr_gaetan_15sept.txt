@@ -13,7 +13,7 @@ Fonctionnement des nouveautés :
 - jouable sans bot en mettant comme noms de bots ""
 
 
-Voivi un affrontement donné:
+Voici un affrontement:
 Score:
  glouton1  :  79475 
  alea1  :  74320 
