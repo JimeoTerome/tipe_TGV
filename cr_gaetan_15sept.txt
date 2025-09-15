@@ -1,0 +1,23 @@
+Travaux :
+- Fichier trié et lisible
+- fonction botj : Déclenche les bots et compte le scrore
+- jouerX et jouer O adaptés au code
+- fonction totalite permettannt de simuler 81*2*n parties
+- glouton1 fonctionnel
+- alea1 fonctionnel
+
+Fonctionnement des nouveautés :
+- Toutes les variables globales sont déclarées au début
+- affichage et totalite ne sont pas comptaibles
+- lire la docu associée à botj : c'est la seule fonction nécessitant des modifications lors d'ajouts d'algo
+- jouable sans bot en mettant comme noms de bots ""
+
+
+Voivi un affrontement donné:
+Score:
+ glouton1  :  79475 
+ alea1  :  74320 
+Nulle: 8205 
+TOTAL =  162000
+On se rend compte que le glouton1 n'est pas bon
+Sur ma machine, on atteint environ 40 parties par secondes.
