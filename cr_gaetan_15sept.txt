@@ -21,3 +21,9 @@ Nulle: 8205
 TOTAL =  162000
 On se rend compte que le glouton1 n'est pas bon
 Sur ma machine, on atteint environ 40 parties par secondes.
+
+Les prochains travaux :
+glouton2, un algo glouton2 bien meilleur que l'aléatoire 
+ia1, un algorithme utilisant l'ia
+optimiation du code
+réécriture des variables et suppression de celles en doublons
