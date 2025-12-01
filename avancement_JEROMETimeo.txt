@@ -1,0 +1,4 @@
+01/12/2025 :
+création réseau de neuronnes
+implementation du calcul de récompense 
+implémentation du "squelette" de la fonction entrainement
