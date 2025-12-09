@@ -4,3 +4,4 @@ implementation du calcul de récompense
 implémentation du "squelette" de la fonction entrainement
 09/12/2025 : 
 Avancement de la fonction entrainement (il faut encore la corriger).
+Mise en ligne de ce que j'avais fait avant pour l'environement
