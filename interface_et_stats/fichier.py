@@ -1,3 +1,5 @@
+couleur_IA = 1 # 1 si IA joue les X, 0 sinon
+
 def afficher_plateau(plateau):
   for i in range(9):
         if i % 3 == 0 and i != 0:
@@ -12,3 +14,5 @@ def afficher_plateau(plateau):
             else:
                 print("·", end=" ")
         print()
+
+stat_sous_morpion = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]] # dans l'ordre de lecture // 1 : X ; 2 : 0 ; 3 : nul
