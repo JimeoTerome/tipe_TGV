@@ -99,17 +99,17 @@ def fin_de_partie(plateau):
     global tab_des_goat
     #pour faire une répartition de qui gagne quoi
     for i in range (9):
-        if (qui_a_gagne_morpion(plateau[i])==0):
+        if (qui_a_gagne_morpion(plateau[i])==1):
             stat_sous_morpion[i][1] +=1
         elif (qui_a_gagne_morpion(plateau[i])==0):
             stat_sous_morpion[i][0] +=1
         else:
             stat_sous_morpion[i][2] +=1
     #pour faire une stat de l'évolution des victoires
-    if (qui_a_gagne(plateau)=0):
+    if (qui_a_gagne(plateau)==0):
         victoireO +=1
         tab_des_goat.append(0)
-    elif (qui_a_gagne(plateau)=1):
+    elif (qui_a_gagne(plateau)==1):
         victoireX +=1
         tab_des_goat.append(1)
     else :
