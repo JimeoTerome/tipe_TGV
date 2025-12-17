@@ -84,7 +84,7 @@ def afficher_plateau(plateau):
                 print("|", end=" ")
             if plateau[i][j] == 1:
                 print("X", end=" ")
-            elif plateau[i][j] == -1:
+            elif plateau[i][j] == 0:
                 print("O", end=" ")
             else:
                 print("·", end=" ")
@@ -152,12 +152,10 @@ def faire_des_stats(plateau):
     cn = 0
     
     for r in tab_des_goat:
-        if r == "X":
+        if r == 1:  # X
             cx += 1
-        elif r == "O":
+        elif r == 0:  # O
             co += 1
-        else:
-            cn += 1
     
         x_cum.append(cx)
         o_cum.append(co)
