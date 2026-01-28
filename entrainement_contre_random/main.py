@@ -230,7 +230,7 @@ def calcule_recomp(etat_avant,etat_apres,symbole):
                 return -1
     return 0
 
-def entrainement(politique, environement, nb_ep, symbole,taux_appr=10e-3):
+def entrainement(politique, environement, nb_ep, symbole,taux_appr=1e-3):
     recomps_episodes = []
     if symbole == 0:
         symbole_adv = 1
