@@ -80,48 +80,39 @@ class Stictactoe():
         
         return apres, recompense
 
-    def step(self, action):
-        symbole = 1
-        symbole_adv = 0
+    def stepIA(self,action,symbole):
         r = 0
-        avant1 = self.jeu.copy()
-        i1 = action//9 #le sous tableau où on joue
-        j1 = action % 9 #la case dans ce sous tableau
+        apres,recomp = self.jouer_coup(action,symbole)
+        r += recomp
 
+        resultat = qui_a_gagne(apres)
+
+        if resultat == 0 or resultat == 1 or resultat == -2:
+            #printM(self.jeu.flatten())
+            return apres, r, True, 0
         
-
-        apres1,recomp1 = self.jouer_coup(action,symbole)
-        r += recomp1
-
-        resultat1 = qui_a_gagne(apres1)
-
-        if resultat1 == 0 or resultat1 == 1 or resultat1 == -2:
-            printM(self.jeu.flatten())
-            return apres1, r, True, 0 #je ne sais pas ce que doit être la dernière valeur
-
-        #Entrainement sur un bot aléatoire
+        #printM(self.jeu.flatten())
+        return apres,r,False,0
+    
+    def stepRandom(self,symbole):
+        r = 0
         coup_autorise = self.coup_autorise()
         if len(coup_autorise) == 0:
             print("Naaaaaan")
             printM(self.jeu.flatten())
             return self.jeu.copy(), r, True, 0
-
-        k = random.choice(coup_autorise)
-        apres2, recomp2 = self.jouer_coup(k, symbole_adv)
-
-        r -= recomp2
-
-        resultat2 = qui_a_gagne(apres2)
-
-        if resultat2 == 0 or resultat2 == 1 or resultat2 == -2:
-            printM(self.jeu.flatten())
-            return apres2, r, True, 0 #je ne sais pas ce que doit être la dernière valeur
         
-        printM(self.jeu.flatten())
-        return apres2,r,False,0 #je ne sais pas ce que doit être la dernière valeur
+        k = random.choice(coup_autorise)
+        apres,recomp = self.jouer_coup(k,symbole)
+        r -= recomp
+        resultat = qui_a_gagne(apres)
+        if resultat == 0 or resultat == 1 or resultat == -2:
+            #printM(self.jeu.flatten())
+            return apres, r, True, 0 #je ne sais pas ce que doit être la dernière valeur
+        
+        #printM(self.jeu.flatten())
+        return apres,r,False,0
     
-    #soucis : ne prends pas en compte les jeux déjà gagné 
-    #solution : créer une liste des cases bloquées
     def coup_autorise(self): 
         #la fonction renvoie la liste TOUS des coups autorisées
         #càd si on peux jouer où on veux on renvoie toutes les cases où personne n'a joué
@@ -239,44 +230,60 @@ def calcule_recomp(etat_avant,etat_apres,symbole):
                 return -1
     return 0
 
-
-#Cette fonction ne marche pas
 def entrainement(politique, environement, nb_ep, symbole,taux_appr=10e-3):
     recomps_episodes = []
-    optimisateur = optim.Adam(politique.parameters(),lr = taux_appr)
     if symbole == 0:
-        opp_symbole = 1
+        symbole_adv = 1
     else:
-        opp_symbole = 0
+        symbole_adv = 0
+    optimisateur = optim.Adam(politique.parameters(),lr = taux_appr)
     for episodes in range(nb_ep):
         etat = environement.reset()
         etat = torch.tensor(etat, dtype=torch.float32).flatten()
         log_probs =[]
         fini = False 
         recomp = []
-        while not(fini): 
-            valeurs = politique(etat) 
-
-            actions = environement.coup_autorise() #ne marche pas
-            coup_legal = valeurs.clone()
-            masque_coup_interdit =torch.ones_like(valeurs, dtype = torch.bool)
-            masque_coup_interdit[actions] = False
-            coup_legal[masque_coup_interdit] = - 1e9
-
-            choix = Categorical(logits=coup_legal)
-            action = choix.sample()
-
-            log_probs.append(choix.log_prob(action))
-
-            coup = action.item()
-            prochain_etat, r ,fini, _= environement.step(coup) #ne marche pas
-            etat = torch.tensor(prochain_etat, dtype=torch.float32).flatten()
-            if fini:
-                temp = qui_a_gagne(prochain_etat)
-                if temp == symbole :
-                    r += 9
+        while not(fini):
+            if symbole == 1:
+                coup = choix_coup_IA(politique,environement,log_probs,etat)
+                prochain_etat, r ,fini, _= environement.stepIA(coup,1)
+                etat = torch.tensor(prochain_etat, dtype=torch.float32).flatten()
+                if fini:
+                    temp = qui_a_gagne(prochain_etat)
+                    if temp == symbole :
+                        r += 9
+                    elif temp == symbole_adv:
+                        r-= 9
                 else:
-                    r-= 9
+                    prochain_etat,r2, fini, _ = environement.stepRandom(0)
+                    r += r2 #r2 est négatif
+                    etat = torch.tensor(prochain_etat, dtype=torch.float32).flatten()
+                    if fini :
+                        temp = qui_a_gagne(prochain_etat)
+                        if temp == symbole:
+                            r+=9
+                        elif temp == symbole_adv:
+                            r-=9
+            else:
+                prochain_etat,r, fini, _ = environement.stepRandom(1)
+                etat = torch.tensor(prochain_etat, dtype=torch.float32).flatten()
+                if fini:
+                    temp = qui_a_gagne(prochain_etat)
+                    if temp == symbole:
+                        r += 9
+                    elif temp == symbole_adv:
+                        r -= 9
+                else: 
+                    coup = choix_coup_IA(politique,environement,log_probs,etat)
+                    prochain_etat, r2 ,fini, _= environement.stepIA(coup,0)
+                    r += r2
+                    etat = torch.tensor(prochain_etat, dtype=torch.float32).flatten()
+                    if fini:
+                        temp = qui_a_gagne(prochain_etat)
+                        if temp == symbole :
+                            r += 9
+                        elif temp == symbole_adv:
+                            r-= 9
             recomp.append(r)
         recompense_final_ep = sum(recomp)
         recomps_episodes.append(recompense_final_ep)    
@@ -286,12 +293,28 @@ def entrainement(politique, environement, nb_ep, symbole,taux_appr=10e-3):
         optimisateur.zero_grad()
         perte.backward()
         optimisateur.step()
+
     return recomps_episodes
+
+def choix_coup_IA(politique, environement,log_probs,etat):
+    valeurs = politique(etat) 
+
+    actions = environement.coup_autorise()
+    coup_legal = valeurs.clone()
+    masque_coup_interdit =torch.ones_like(valeurs, dtype = torch.bool)
+    masque_coup_interdit[actions] = False
+    coup_legal[masque_coup_interdit] = - 1e9
+    choix = Categorical(logits=coup_legal)
+    action = choix.sample()
+
+    log_probs.append(choix.log_prob(action))
+
+    coup = action.item()
+    return coup
 
 reseau = PolitiqueSTicTacToe()
 environement = Stictactoe()
 nb_ep = 100
-symbole = 1
+symbole = 0
 print(entrainement(reseau,environement,nb_ep,symbole))
 torch.save(reseau.state_dict(),"Poids_stictactoe.pth")
-            
