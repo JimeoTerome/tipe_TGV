@@ -4,6 +4,15 @@ import torch.nn as nn # type: ignore
 import torch.optim as optim # type: ignore
 from torch.distributions import Categorical # type: ignore
 import random
+import matplotlib.pyplot as plt
+
+nb_ep = 10000
+
+stat_sous_morpion = [[0,0,0] for _ in range(9)]
+victoireX = 0
+victoireO = 0
+victoireNulle = 0
+tab_des_goat = []
 
 #================= La partie des autres sur Github  ================
 
@@ -231,6 +240,7 @@ def calcule_recomp(etat_avant,etat_apres,symbole):
     return 0
 
 def entrainement(politique, environement, nb_ep, symbole,taux_appr=1e-3):
+    global stat_sous_morpion, victoireX, victoireO, victoireNulle, tab_des_goat
     recomps_episodes = []
     if symbole == 0:
         symbole_adv = 1
@@ -250,10 +260,18 @@ def entrainement(politique, environement, nb_ep, symbole,taux_appr=1e-3):
                 etat = torch.tensor(prochain_etat, dtype=torch.float32).flatten()
                 if fini:
                     temp = qui_a_gagne(prochain_etat)
-                    if temp == symbole :
-                        r += 9
+                    if temp == symbole:
+                            r+=9
+                            victoireX+=1
+                            tab_des_goat.append(1)
                     elif temp == symbole_adv:
-                        r-= 9
+                            r-=9
+                            victoireO+=1
+                            tab_des_goat.append(0)
+                    else:
+                            victoireNulle+=1
+                            tab_des_goat.append(-1)
+                    
                 else:
                     prochain_etat,r2, fini, _ = environement.stepRandom(0)
                     r += r2 #r2 est négatif
@@ -262,17 +280,31 @@ def entrainement(politique, environement, nb_ep, symbole,taux_appr=1e-3):
                         temp = qui_a_gagne(prochain_etat)
                         if temp == symbole:
                             r+=9
+                            victoireX+=1
+                            tab_des_goat.append(1)
                         elif temp == symbole_adv:
                             r-=9
+                            victoireO+=1
+                            tab_des_goat.append(0)
+                        else:
+                            victoireNulle+=1
+                            tab_des_goat.append(-1)
             else:
                 prochain_etat,r, fini, _ = environement.stepRandom(1)
                 etat = torch.tensor(prochain_etat, dtype=torch.float32).flatten()
                 if fini:
                     temp = qui_a_gagne(prochain_etat)
                     if temp == symbole:
-                        r += 9
+                            r+=9
+                            victoireX+=1
+                            tab_des_goat.append(1)
                     elif temp == symbole_adv:
-                        r -= 9
+                            r-=9
+                            victoireO+=1
+                            tab_des_goat.append(0)
+                    else:
+                            victoireNulle+=1
+                            tab_des_goat.append(-1)
                 else: 
                     coup = choix_coup_IA(politique,environement,log_probs,etat)
                     prochain_etat, r2 ,fini, _= environement.stepIA(coup,0)
@@ -280,10 +312,17 @@ def entrainement(politique, environement, nb_ep, symbole,taux_appr=1e-3):
                     etat = torch.tensor(prochain_etat, dtype=torch.float32).flatten()
                     if fini:
                         temp = qui_a_gagne(prochain_etat)
-                        if temp == symbole :
-                            r += 9
+                        if temp == symbole:
+                            r+=9
+                            victoireX+=1
+                            tab_des_goat.append(1)
                         elif temp == symbole_adv:
-                            r-= 9
+                            r-=9
+                            victoireO+=1
+                            tab_des_goat.append(0)
+                        else:
+                            victoireNulle+=1
+                            tab_des_goat.append(-1)
             recomp.append(r)
         recompense_final_ep = sum(recomp)
         recomps_episodes.append(recompense_final_ep)    
@@ -314,7 +353,105 @@ def choix_coup_IA(politique, environement,log_probs,etat):
 
 reseau = PolitiqueSTicTacToe()
 environement = Stictactoe()
-nb_ep = 100
 symbole = 0
 print(entrainement(reseau,environement,nb_ep,symbole))
 torch.save(reseau.state_dict(),"Poids_stictactoe.pth")
+
+
+def fin_de_partie(plateau):
+    global stat_sous_morpion, victoireX, victoireO, victoireNulle, tab_des_goat
+    
+    for i in range(9):
+        res = qui_a_gagne_morpion(plateau[i])
+        if res == 1:
+            stat_sous_morpion[i][0] += 1
+        elif res == 0:
+            stat_sous_morpion[i][1] += 1
+        else:
+            stat_sous_morpion[i][2] += 1
+    
+    res_global = qui_a_gagne(plateau)
+    if res_global == 0:
+        victoireO += 1
+        tab_des_goat.append(0)
+    elif res_global == 1:
+        victoireX += 1
+        tab_des_goat.append(1)
+    else:
+        victoireNulle += 1
+        tab_des_goat.append(-1)
+
+
+def faire_des_stats():
+    global stat_sous_morpion, victoireX, victoireO, victoireNulle, tab_des_goat
+    
+    # Préparer les données pour les 27 barres (9 sous-morpions × 3 résultats)
+    x_positions = []
+    heights = []
+    colors = []
+    labels_x = []
+    
+    color_map = ['#1f77b4', '#ff7f0e', '#2ca02c']  # Bleu (X), Orange (O), Vert (Nul)
+    result_names = ['X', 'O', 'Nul']
+    
+    for i in range(9):
+        for j in range(3):
+            x_positions.append(i * 4 + j)
+            heights.append(stat_sous_morpion[i][j])
+            colors.append(color_map[j])
+    
+    # Labels pour l'axe x (numéro du sous-morpion)
+    for i in range(9):
+        labels_x.append(i * 4 + 1)
+    
+    plt.figure(figsize=(14, 6))
+    plt.bar(x_positions, heights, color=colors, width=0.8)
+    plt.xlabel("Sous-morpion")
+    plt.ylabel("Nombre de parties")
+    plt.title("Résultats par sous-morpion (X / O / Nul)")
+    plt.xticks(labels_x, [f"SM{i+1}" for i in range(9)])
+    
+    # Légende
+    from matplotlib.patches import Patch
+    legend_elements = [Patch(facecolor=color_map[i], label=result_names[i]) for i in range(3)]
+    plt.legend(handles=legend_elements)
+    plt.tight_layout()
+    plt.show()
+    
+    plt.figure()
+    plt.pie(
+        [victoireX, victoireO, victoireNulle],
+        labels=["IA", "Random", "Nul"],
+        autopct="%1.1f%%"
+    )
+    plt.title("Répartition des résultats")
+    plt.show()
+    
+    x_cum, o_cum, n_cum = [], [], []
+    cx, co, cn = 0, 0, 0
+    
+    for r in tab_des_goat:
+        if r == 1:
+            cx += 1
+        elif r == 0:
+            co += 1
+        else:
+            cn += 1
+        
+        x_cum.append(cx)
+        o_cum.append(co)
+        n_cum.append(cn)
+    
+    plt.figure()
+    plt.plot(x_cum, label="IA")
+    plt.plot(o_cum, label="Random")
+    plt.plot(n_cum, label="Nul")
+    plt.xlabel("Nombre de parties")
+    plt.ylabel("Victoires cumulées")
+    plt.title("Évolution des résultats dans le temps")
+    plt.legend()
+    plt.show()
+
+
+
+faire_des_stats()
